@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="refresh" content="8">
+    <title>Dashboard | Srija Image Processor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="topbar">
+    <div class="container nav">
+        <a class="brand" href="{{ url_for('index') }}">Srija Image Processor</a>
+        <a class="nav-link" href="{{ url_for('index') }}">Upload</a>
+    </div>
+</header>
+
+<main class="container">
+    <div class="dashboard-heading">
+        <div>
+            <p class="eyebrow">S3 IMAGE GALLERY</p>
+            <h1>Processing Dashboard</h1>
+            <p class="subtitle">This page refreshes every 8 seconds while AWS processes new uploads.</p>
+        </div>
+        <a class="button-link" href="{{ url_for('index') }}">Upload another</a>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="flash">{{ messages[0] }}</div>
+        {% endif %}
+    {% endwith %}
+
+    {% if items %}
+        <div class="gallery">
+        {% for item in items %}
+            <article class="card">
+                <div class="card-top">
+                    <div>
+                        <h2>{{ item.name }}</h2>
+                        <small>{{ item.uploaded_at }}</small>
+                    </div>
+                    <span class="status {{ 'done' if item.status == 'Completed' else 'processing' }}">
+                        {{ item.status }}
+                    </span>
+                </div>
+
+                <div class="images">
+                    <div class="image-box">
+                        <span>Original</span>
+                        {% if item.original_url %}
+                            <img src="{{ item.original_url }}" alt="Original image">
+                        {% endif %}
+                    </div>
+
+                    <div class="image-box">
+                        <span>Resized colour</span>
+                        {% if item.resized_url %}
+                            <img src="{{ item.resized_url }}" alt="Resized image">
+                            <a href="{{ item.resized_url }}" target="_blank">Open processed image</a>
+                        {% else %}
+                            <div class="placeholder">Processing…</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="image-box">
+                        <span>Black & white</span>
+                        {% if item.bw_url %}
+                            <img src="{{ item.bw_url }}" alt="Black and white image">
+                            <a href="{{ item.bw_url }}" target="_blank">Open B&W image</a>
+                        {% else %}
+                            <div class="placeholder">Processing…</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <form action="{{ url_for('delete') }}" method="post" onsubmit="return confirm('Delete original and processed images?')">
+                    <input type="hidden" name="upload_key" value="{{ item.upload_key }}">
+                    <button class="delete-button" type="submit">Delete images</button>
+                </form>
+            </article>
+        {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty">No images uploaded yet.</div>
+    {% endif %}
+</main>
+</body>
+</html>

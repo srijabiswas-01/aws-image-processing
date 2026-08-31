@@ -1,0 +1,21 @@
+{
+  "QueueConfigurations": [
+    {
+      "Id": "SrijaImageUploadToSQS",
+      "QueueArn": "arn:aws:sqs:us-east-1:409326484181:srija-image-processing-queue",
+      "Events": [
+        "s3:ObjectCreated:*"
+      ],
+      "Filter": {
+        "Key": {
+          "FilterRules": [
+            {
+              "Name": "prefix",
+              "Value": "uploads/"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
