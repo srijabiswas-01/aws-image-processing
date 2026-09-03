@@ -1,270 +1,363 @@
-# Srija Flask + AWS Image Processor
+# Srija Flask + AWS Automated Image Processing System
 
-A cloud-based, event-driven image processing application built with **Python Flask** and **AWS services**.
+A cloud-based, event-driven image processing application developed using **Python Flask, Amazon Web Services, Amazon RDS MySQL, AWS Lambda, Amazon S3, Amazon SQS, Amazon SNS and Pillow**.
 
-The system allows users to upload images through a Flask web application, stores them in Amazon S3, processes them automatically using AWS Lambda and Pillow, and generates both a **resized colour image** and a **black-and-white image**.
+The application provides secure user registration and login, allows authenticated users to upload images, automatically processes those images through an AWS serverless workflow, stores detailed processing information in Amazon RDS, and displays original and processed images through a Flask dashboard.
 
-Processed images are displayed on a Flask dashboard, while Amazon SNS sends an email notification containing temporary download links.
+For every uploaded image, the system automatically generates:
 
----
+- A resized colour image
+- A black-and-white image
 
-## Project Overview
-
-This project demonstrates how a Flask application can be integrated with multiple AWS services to create a reliable, automated, and serverless image-processing workflow.
-
-The application uses:
-
-- **Python Flask** for the web interface
-- **Amazon S3** for image storage
-- **Amazon SQS** for asynchronous message handling
-- **AWS Lambda** for serverless processing
-- **Pillow (PIL)** for image transformation
-- **Amazon SNS** for email notifications
-- **AWS IAM** for access control
-- **Amazon CloudWatch** for monitoring and logs
-- **AWS CLI** for deployment and configuration
-
-No EC2 instance or relational database is required.
+The application also maintains processing history, image metadata, job status, processing duration and event logs.
 
 ---
 
-## Application Screenshots
+# Project Overview
 
-### Upload Page
+The project demonstrates the integration of a traditional Flask web application with event-driven and serverless AWS services.
 
-The upload interface allows users to select a JPG, JPEG, or PNG image and upload it directly to the Amazon S3 `uploads/` folder.
+The complete system uses:
+
+- **Python Flask** – web application and user interface
+- **Amazon RDS MySQL** – user accounts, image metadata and processing history
+- **Amazon S3** – original and processed image storage
+- **Amazon SQS** – asynchronous event queue
+- **AWS Lambda** – serverless image processing
+- **Pillow (PIL)** – image resizing and grayscale conversion
+- **PyMySQL** – Lambda and Flask connectivity with MySQL
+- **Amazon SNS** – email completion notifications
+- **AWS IAM** – security and access control
+- **Amazon CloudWatch** – Lambda monitoring and logs
+- **AWS CLI** – deployment and AWS resource management
+- **HTML/CSS** – application interface
+
+The project does **not require Amazon EC2** for image processing.
+
+---
+
+# Application Screenshots
+
+## User Registration
+
+New users can create an account before accessing the image-processing system.
+
+![User Registration](screenshots/Register.png)
+
+## User Login
+
+Registered users authenticate through the Flask login interface.
+
+![User Login](screenshots/Login.png)
+
+## Image Upload Page
+
+Authenticated users can upload JPG, JPEG or PNG images.
 
 ![Image Upload Page](screenshots/upload-page.png)
 
-### Image Processing Dashboard
+## Image Processing Dashboard
 
-The dashboard displays the original image together with the generated resized and black-and-white versions.
-
-It also shows the processing status and provides options to access or delete images.
+The dashboard displays images belonging only to the currently authenticated user.
 
 ![Image Processing Dashboard](screenshots/dashboard.png)
 
+## Image Processing Details
+
+The image details page provides processing metadata and event history.
+
+![Image Processing Details](screenshots/Image-details.png)
+
 ---
 
-## System Architecture
+# System Architecture
 
 ```text
-                   USER
-                     |
-                     v
-             +---------------+
-             |   Flask Web   |
-             |  Application  |
-             +---------------+
-                     |
-                     | Upload
-                     v
-             +---------------+
-             |   Amazon S3   |
-             |   uploads/    |
-             +---------------+
-                     |
-                ObjectCreated
-                     |
-                     v
-             +---------------+
-             |  Amazon SQS   |
-             |     Queue     |
-             +---------------+
-                     |
-                     v
-             +---------------+
-             |  AWS Lambda   |
-             |    Pillow     |
-             +---------------+
-                /         \
-               /           \
-              v             v
-      Resized Colour    Black & White
-               \           /
-                \         /
-                 v       v
-             +---------------+
-             |   Amazon S3   |
-             |  processed/   |
-             +---------------+
-                     |
-                     v
-             +---------------+
-             |  Amazon SNS   |
-             +---------------+
-                     |
-                     v
-             Email Notification
+                         USER
+                           |
+                           v
+                  +----------------+
+                  | Flask Web App  |
+                  +----------------+
+                    |            |
+              Register/Login    Upload
+                    |            |
+                    v            v
+              +----------+   +----------+
+              |   RDS    |   | Amazon S3|
+              |  MySQL   |   | uploads/ |
+              +----------+   +----------+
+                    ^            |
+                    |       ObjectCreated
+                    |            |
+                    |            v
+                    |       +----------+
+                    |       |Amazon SQS|
+                    |       +----------+
+                    |            |
+                    |            v
+                    |       +----------+
+                    +-------|  Lambda  |
+                            | + Pillow |
+                            | +PyMySQL |
+                            +----------+
+                              /      \
+                             /        \
+                            v          v
+                     Resized Image   B&W Image
+                             \        /
+                              \      /
+                               v    v
+                          +-------------+
+                          | Amazon S3   |
+                          | processed/  |
+                          +-------------+
+                                |
+                                v
+                          +-------------+
+                          | Amazon SNS  |
+                          +-------------+
+                                |
+                                v
+                         Email Notification
 ```
 
 ---
 
-## Workflow
-
-The complete processing flow is:
+# Complete Workflow
 
 ```text
-Flask
-   ↓
+User
+  ↓
+Register / Login
+  ↓
+Flask Application
+  ↓
+Amazon RDS
+  ↓
+Upload Image
+  ↓
 Amazon S3 uploads/
-   ↓
+  ↓
 S3 ObjectCreated Event
-   ↓
+  ↓
 Amazon SQS
-   ↓
+  ↓
 AWS Lambda
-   ↓
+  ↓
+Amazon RDS → PROCESSING
+  ↓
+Download Original Image
+  ↓
 Pillow Image Processing
-   ↓
+  ├── Resize Colour Image
+  └── Create Black-and-White Image
+  ↓
 Amazon S3 processed/
-   ↓
+  ↓
+Amazon RDS → COMPLETED
+  ↓
 Amazon SNS
-   ↓
+  ↓
 Email Notification
+  ↓
+Flask Dashboard
 ```
 
-When a user uploads an image:
+When an authenticated user uploads an image:
 
-1. Flask uploads the original image to Amazon S3.
-2. S3 generates an `ObjectCreated` event.
-3. The event is delivered to Amazon SQS.
-4. AWS Lambda receives the SQS message.
-5. Lambda downloads the image from S3.
-6. Pillow resizes the image.
-7. Pillow creates a black-and-white version.
-8. Lambda uploads both processed images to S3.
-9. Lambda publishes a notification to Amazon SNS.
-10. SNS sends an email containing temporary S3 links.
-11. The Flask dashboard displays the processed images.
+1. Flask validates the image format.
+2. An image record is created in Amazon RDS.
+3. The upload process is recorded in `processing_events`.
+4. Flask uploads the original image to Amazon S3.
+5. S3 generates an `ObjectCreated` event.
+6. The event is sent to Amazon SQS.
+7. AWS Lambda receives the SQS message.
+8. Lambda connects to Amazon RDS using PyMySQL.
+9. The image status is updated to `PROCESSING`.
+10. Lambda downloads the image from S3.
+11. Pillow corrects image orientation if required.
+12. Pillow resizes the image.
+13. Pillow creates a black-and-white image.
+14. Lambda uploads both processed images to S3.
+15. Image dimensions, file sizes and timestamps are stored in RDS.
+16. Processing job information is recorded.
+17. Processing events are recorded.
+18. The image status becomes `COMPLETED`.
+19. Lambda generates temporary pre-signed S3 URLs.
+20. Amazon SNS sends a completion email.
+21. The Flask dashboard displays the processed images.
 
 ---
 
-## Main Features
+# User Authentication
 
-### Web-Based Upload
+Users can register, log in, access their dashboard, upload images, view processing details, delete images and log out.
 
-Users can upload:
+Passwords are never stored directly. Flask uses Werkzeug:
 
-- JPG
-- JPEG
-- PNG
+```python
+generate_password_hash()
+check_password_hash()
+```
 
-Uploaded files are stored under:
+Each image is linked to its owner through `user_id`.
+
+---
+
+# Amazon RDS MySQL
+
+Database:
 
 ```text
-s3://srija-biswas/uploads/
+image_processing
+```
+
+Main tables:
+
+```text
+users
+images
+processing_jobs
+processing_events
+```
+
+## Users Table
+
+Stores registered users, password hashes, account status and login timestamps.
+
+## Images Table
+
+Stores image ownership, filenames, S3 keys, dimensions, file sizes, processing status and timestamps.
+
+Possible statuses:
+
+```text
+UPLOADING
+UPLOADED
+QUEUED
+PROCESSING
+COMPLETED
+FAILED
+```
+
+## Processing Jobs Table
+
+Stores:
+
+```text
+image_id
+lambda_request_id
+sqs_message_id
+status
+started_at
+completed_at
+processing_duration_ms
+error_message
+```
+
+## Processing Events Table
+
+Typical events:
+
+```text
+IMAGE_UPLOAD_STARTED
+S3_UPLOAD_COMPLETED
+PROCESSING_QUEUED
+PROCESSING_STARTED
+PROCESS_COMPLETED
+PROCESS_FAILED
 ```
 
 ---
 
-### Automatic Image Processing
-
-AWS Lambda processes each uploaded image using Pillow.
-
-For every original image, two files are created:
+# Example RDS Processing Result
 
 ```text
-processed/<name>_resized.jpg
-processed/<name>_bw.jpg
-```
+Filename:
+tiger.jpeg
 
-or, for PNG images:
+Status:
+COMPLETED
 
-```text
-processed/<name>_resized.png
-processed/<name>_bw.png
-```
+Original dimensions:
+625 × 350
 
----
+Resized dimensions:
+625 × 350
 
-## Resized Colour Image
+Resized file size:
+40,034 bytes
 
-The uploaded image is resized while maintaining its aspect ratio.
+Black-and-white dimensions:
+625 × 350
 
-The maximum output size is:
+Black-and-white file size:
+35,288 bytes
 
-```text
-800 × 800 pixels
-```
-
-Example:
-
-```text
-Original:
-4016 × 6016
-
-Processed:
-534 × 800
-```
-
-JPEG files are saved with approximately:
-
-```text
-Quality = 85
-```
-
-This reduces file size while maintaining good visual quality.
-
----
-
-## Black-and-White Processing
-
-Lambda creates a grayscale version of the resized image.
-
-Therefore, a single uploaded image produces:
-
-```text
-Original Image
-     |
-     +---- Resized Colour Image
-     |
-     +---- Black-and-White Image
+Processing duration:
+631 ms
 ```
 
 ---
 
-## Amazon S3 Structure
+# Amazon S3
 
-The bucket separates uploaded and processed images using prefixes.
+Bucket:
+
+```text
+srija-biswas
+```
+
+Structure:
 
 ```text
 srija-biswas/
 │
 ├── uploads/
-│   ├── image_12345678.jpg
-│   └── photo_87654321.png
+│   ├── tiger_12345678.jpeg
+│   └── photo_11223344.png
 │
 └── processed/
-    ├── image_12345678_resized.jpg
-    ├── image_12345678_bw.jpg
-    ├── photo_87654321_resized.png
-    └── photo_87654321_bw.png
+    ├── tiger_12345678_resized.jpeg
+    ├── tiger_12345678_bw.jpeg
+    ├── photo_11223344_resized.png
+    └── photo_11223344_bw.png
 ```
 
-Only objects created inside:
-
-```text
-uploads/
-```
-
-trigger the processing pipeline.
-
-Objects created inside:
-
-```text
-processed/
-```
-
-do not trigger Lambda again.
-
-This prevents recursive Lambda execution.
+Only objects created in `uploads/` trigger the pipeline, preventing recursive Lambda execution.
 
 ---
 
-## Amazon SQS
+# Image Processing
 
-Amazon SQS acts as an intermediate messaging layer between S3 and Lambda.
+AWS Lambda uses Pillow to create:
+
+```text
+Original Image
+      |
+      +------ Resized Colour Image
+      |
+      +------ Black-and-White Image
+```
+
+Maximum resize:
+
+```text
+800 × 800 pixels
+```
+
+JPEG quality is approximately:
+
+```text
+85
+```
+
+Images smaller than the maximum dimensions are not unnecessarily upscaled.
+
+---
+
+# Amazon SQS
 
 Queue:
 
@@ -272,31 +365,17 @@ Queue:
 srija-image-processing-queue
 ```
 
-Using SQS provides asynchronous processing and reduces direct dependency between Amazon S3 and AWS Lambda.
-
 Architecture:
 
 ```text
 S3 → SQS → Lambda
 ```
 
+SQS provides asynchronous processing and decouples S3 from Lambda.
+
 ---
 
-## AWS Lambda
-
-AWS Lambda performs the image-processing operation.
-
-The function:
-
-- Reads the SQS message
-- Extracts the S3 object information
-- Downloads the original image
-- Corrects image orientation
-- Resizes the image
-- Creates a grayscale version
-- Uploads both processed versions
-- Generates temporary S3 links
-- Publishes an SNS notification
+# AWS Lambda
 
 Lambda function:
 
@@ -304,87 +383,71 @@ Lambda function:
 srija-image-processor
 ```
 
----
-
-## Pillow Lambda Layer
-
-The Pillow library is provided using an AWS Lambda Layer.
-
-This keeps the main Lambda deployment package smaller and separates third-party dependencies from the application code.
-
-The project uses Python 3.12-compatible Pillow libraries.
-
----
-
-## Image Metadata
-
-Processed images can include useful metadata such as:
+Runtime:
 
 ```text
-original-width
-original-height
-processed-width
-processed-height
-original-size
-processed-size
-processing-status
-variant
+Python 3.12
 ```
 
-Example:
+The function:
 
-```text
-original-width: 4016
-original-height: 6016
-processed-width: 534
-processed-height: 800
-processing-status: completed
-variant: resized-colour
-```
-
-This provides processing information without requiring a relational database.
+- Reads SQS messages
+- Extracts S3 object information
+- Finds the corresponding RDS record
+- Updates processing status
+- Downloads the source image
+- Corrects EXIF orientation
+- Resizes the image
+- Creates a black-and-white version
+- Uploads processed files to S3
+- Updates RDS metadata
+- Records processing job information
+- Records processing events
+- Generates pre-signed URLs
+- Publishes an SNS notification
 
 ---
 
-## Flask Dashboard
+# Lambda Layers
 
-The dashboard displays:
-
-- Original uploaded image
-- Resized colour image
-- Black-and-white image
-- Processing status
-- Temporary image links
-- Delete option
-
-Possible processing states include:
+The function uses:
 
 ```text
-Processing
-Completed
+srija-pillow-image-layer
+srija-pymysql-layer
 ```
 
-The dashboard refreshes automatically every:
+The deployment ZIP only needs:
 
 ```text
-8 seconds
+lambda_function.py
 ```
 
 ---
 
-## Secure Image Access
+# Flask Dashboard
 
-S3 images remain private.
+The dashboard can display:
 
-The Flask application creates temporary **pre-signed S3 URLs** that allow users to view the images without making the bucket publicly accessible.
-
-This provides temporary authenticated access to private S3 objects.
+```text
+Original Image
+Resized Colour Image
+Black-and-White Image
+Processing Status
+Upload Timestamp
+Image Details
+Delete Option
+```
 
 ---
 
-## Email Notification
+# Secure Image Access
 
-After image processing is completed, AWS Lambda publishes a message to Amazon SNS.
+Images remain private in S3. The application generates temporary **pre-signed S3 URLs** for authenticated access.
+
+---
+
+# Email Notifications
 
 SNS topic:
 
@@ -392,74 +455,66 @@ SNS topic:
 srija-image-processing-notifications
 ```
 
-A typical notification contains:
-
-```text
-Image processing completed successfully.
-
-Original dimensions:
-4016 × 6016
-
-Processed dimensions:
-534 × 800
-
-Resized Colour Image:
-Temporary S3 link
-
-Black-and-White Image:
-Temporary S3 link
-
-Status:
-SUCCESS
-```
-
-The generated links are temporary and expire automatically.
-
-> Amazon SNS email notifications contain links rather than binary image attachments. Amazon SES can be added later if actual email attachments are required.
+After processing, Lambda sends a completion notification containing temporary links to the processed files.
 
 ---
 
-## IAM Security
+# IAM Security
 
-AWS IAM controls access between the services.
-
-### Lambda Execution Role
-
-The Lambda execution role requires permissions such as:
+Typical Lambda permissions:
 
 ```text
 s3:GetObject
 s3:PutObject
-
 sqs:ReceiveMessage
 sqs:DeleteMessage
 sqs:GetQueueAttributes
-
 sns:Publish
 ```
 
-### Local Flask IAM User
-
-The AWS credentials used by Flask require:
-
-```text
-s3:ListBucket
-s3:GetObject
-s3:PutObject
-s3:DeleteObject
-```
-
-for the required `uploads/` and `processed/` prefixes.
-
-The project follows the principle of least privilege.
+The local Flask AWS identity requires the appropriate S3 permissions.
 
 ---
 
-## CloudWatch Monitoring
+# VPC and RDS Connectivity
 
-AWS Lambda sends execution logs to Amazon CloudWatch.
+Lambda connects to RDS through the application's VPC.
 
-Logs can be viewed using:
+```text
+Lambda Security Group
+        |
+        | TCP 3306
+        v
+RDS Security Group
+        |
+        v
+MySQL
+```
+
+---
+
+# Environment Variables
+
+Create a local `.env` file:
+
+```env
+AWS_REGION=us-east-1
+S3_BUCKET=srija-biswas
+
+DB_HOST=your-rds-endpoint.amazonaws.com
+DB_PORT=3306
+DB_NAME=image_processing
+DB_USER=your_database_user
+DB_PASSWORD=your_database_password
+
+FLASK_SECRET_KEY=replace-with-a-long-random-secret
+```
+
+Never commit real secrets.
+
+---
+
+# CloudWatch Monitoring
 
 ```powershell
 aws logs tail /aws/lambda/srija-image-processor `
@@ -467,53 +522,21 @@ aws logs tail /aws/lambda/srija-image-processor `
   --region us-east-1
 ```
 
-Example successful output:
-
-```text
-Processing image: uploads/example.jpg
-
-Original dimensions:
-4016x6016
-
-Resized image uploaded:
-s3://srija-biswas/processed/example_resized.jpg
-
-Black-and-white image uploaded:
-s3://srija-biswas/processed/example_bw.jpg
-
-SNS notification sent
-```
-
-CloudWatch helps diagnose:
-
-- Lambda errors
-- S3 access problems
-- Pillow processing errors
-- SQS issues
-- SNS publishing failures
-
 ---
 
-## Project Structure
+# Project Structure
 
 ```text
 aws-image-processing/
 │
 ├── app.py
+├── database.py
 ├── README.md
 ├── requirements.txt
-├── test.jpg
+├── .gitignore
 │
 ├── lambda/
-│   ├── lambda_function.py
-│   ├── lambda_function.zip
-│   ├── PIL/
-│   ├── pillow.libs/
-│   └── pillow-12.2.0.dist-info/
-│
-├── pillow-layer/
-│   ├── pillow-layer.zip
-│   └── python/
+│   └── lambda_function.py
 │
 ├── policies/
 │   ├── lambda-policy.json
@@ -523,33 +546,44 @@ aws-image-processing/
 │   └── trust-policy.json
 │
 ├── screenshots/
+│   ├── Login.png
+│   ├── Register.png
 │   ├── upload-page.png
-│   └── dashboard.png
+│   ├── dashboard.png
+│   └── Image-details.png
 │
 ├── static/
 │   └── style.css
 │
 └── templates/
+    ├── login.html
+    ├── register.html
     ├── index.html
-    └── dashboard.html
+    ├── dashboard.html
+    └── image_details.html
 ```
 
 ---
 
-## Technologies Used
+# Technologies Used
 
 | Technology | Purpose |
 |---|---|
 | Python | Backend development |
-| Flask | Web application and dashboard |
+| Flask | Web application |
+| Werkzeug | Password hashing and authentication |
+| MySQL | Relational database |
+| Amazon RDS | Managed MySQL database |
+| PyMySQL | Python–MySQL connectivity |
 | Pillow | Image processing |
-| Amazon S3 | Object storage |
-| Amazon SQS | Message queue |
-| AWS Lambda | Serverless image processing |
-| Amazon SNS | Email notification |
+| Amazon S3 | Image storage |
+| Amazon SQS | Asynchronous message queue |
+| AWS Lambda | Serverless processing |
+| Amazon SNS | Email notifications |
 | AWS IAM | Access management |
+| Amazon VPC | Lambda/RDS networking |
 | Amazon CloudWatch | Logs and monitoring |
-| AWS CLI | AWS resource management |
+| AWS CLI | AWS configuration and deployment |
 | HTML | User interface |
 | CSS | Application styling |
 
@@ -557,33 +591,19 @@ aws-image-processing/
 
 # Installation
 
-## 1. Clone the Repository
+## 1. Clone Repository
 
 ```powershell
 git clone https://github.com/srijabiswas-01/aws-image-processing.git
-```
-
-Move into the project directory:
-
-```powershell
 cd aws-image-processing
 ```
 
----
-
-## 2. Create a Virtual Environment
+## 2. Create Virtual Environment
 
 ```powershell
 py -m venv .venv
-```
-
-Activate it:
-
-```powershell
 .\.venv\Scripts\Activate.ps1
 ```
-
----
 
 ## 3. Install Dependencies
 
@@ -591,95 +611,20 @@ Activate it:
 py -m pip install -r requirements.txt
 ```
 
----
-
 ## 4. Configure AWS CLI
-
-The application uses AWS credentials already configured for the AWS CLI.
-
-Check the configuration:
 
 ```powershell
 aws configure list
+aws sts get-caller-identity
 ```
 
-Optional environment variables:
+## 5. Configure Environment Variables
 
-```powershell
-$env:AWS_REGION="us-east-1"
-
-$env:S3_BUCKET="srija-biswas"
-
-$env:FLASK_SECRET_KEY="replace-with-a-random-secret"
-```
+Create `.env` using your own credentials and configuration values.
 
 ---
 
 # Running the Flask Application
-
-From the project root:
-
-```powershell
-py .\app.py
-```
-
-The development server starts at:
-
-```text
-http://127.0.0.1:5000
-```
-
-Open the address in a browser.
-
----
-
-# Deploying the Lambda Function
-
-Move into the Lambda directory:
-
-```powershell
-cd .\lambda
-```
-
-Create the deployment package:
-
-```powershell
-Compress-Archive `
-  -Path .\lambda_function.py `
-  -DestinationPath .\lambda_function.zip `
-  -Force
-```
-
-Upload the new Lambda code:
-
-```powershell
-aws lambda update-function-code `
-  --function-name srija-image-processor `
-  --zip-file fileb://lambda_function.zip `
-  --region us-east-1
-```
-
-Wait for Lambda to finish updating:
-
-```powershell
-aws lambda wait function-updated `
-  --function-name srija-image-processor `
-  --region us-east-1
-```
-
-Return to the project root:
-
-```powershell
-cd ..
-```
-
-The existing Pillow Lambda Layer remains attached to the function.
-
----
-
-# Testing the Application
-
-Start Flask:
 
 ```powershell
 py .\app.py
@@ -691,25 +636,38 @@ Open:
 http://127.0.0.1:5000
 ```
 
-Upload a new image.
+---
 
-The expected S3 objects should be similar to:
+# Testing Image Processing
+
+Expected workflow:
 
 ```text
-uploads/example_12345678.jpg
-
-processed/example_12345678_resized.jpg
-processed/example_12345678_bw.jpg
+Flask
+ ↓
+RDS
+ ↓
+S3
+ ↓
+SQS
+ ↓
+Lambda
+ ↓
+RDS
+ ↓
+S3 processed/
+ ↓
+SNS
 ```
 
-Check the processed folder:
+Check S3:
 
 ```powershell
 aws s3 ls s3://srija-biswas/processed/ `
   --region us-east-1
 ```
 
-Check Lambda logs:
+Check logs:
 
 ```powershell
 aws logs tail /aws/lambda/srija-image-processor `
@@ -719,54 +677,170 @@ aws logs tail /aws/lambda/srija-image-processor `
 
 ---
 
+# Verify RDS Image Metadata
+
+```sql
+SELECT
+    id,
+    original_filename,
+    overall_status,
+    original_width,
+    original_height,
+    resized_width,
+    resized_height,
+    resized_size_bytes,
+    bw_width,
+    bw_height,
+    bw_size_bytes,
+    processing_started_at,
+    processing_completed_at
+FROM images
+ORDER BY id DESC
+LIMIT 5;
+```
+
+# Verify Processing Jobs
+
+```sql
+SELECT
+    id,
+    image_id,
+    lambda_request_id,
+    sqs_message_id,
+    status,
+    started_at,
+    completed_at,
+    processing_duration_ms,
+    error_message
+FROM processing_jobs
+ORDER BY id DESC
+LIMIT 10;
+```
+
+# Verify Processing Events
+
+```sql
+SELECT
+    id,
+    image_id,
+    event_type,
+    status,
+    message,
+    event_time
+FROM processing_events
+ORDER BY id DESC
+LIMIT 20;
+```
+
+---
+
+# Deploying the Lambda Function
+
+```powershell
+Remove-Item .\lambda-deploy -Recurse -Force -ErrorAction SilentlyContinue
+mkdir .\lambda-deploy
+
+Copy-Item .\lambda\lambda_function.py .\lambda-deploy\lambda_function.py
+
+Compress-Archive `
+  -Path .\lambda-deploy\lambda_function.py `
+  -DestinationPath .\lambda\function-rds.zip `
+  -Force
+```
+
+Deploy:
+
+```powershell
+aws lambda update-function-code `
+  --function-name srija-image-processor `
+  --zip-file fileb://.\lambda\function-rds.zip `
+  --region us-east-1
+```
+
+Wait:
+
+```powershell
+aws lambda wait function-updated `
+  --function-name srija-image-processor `
+  --region us-east-1
+```
+
+---
+
+# Security Considerations
+
+The project applies:
+
+- Password hashing
+- Private S3 objects
+- Pre-signed S3 URLs
+- IAM permissions
+- RDS security groups
+- Lambda security groups
+- Environment variables
+- `.gitignore` protection
+- Per-user image ownership
+- VPC networking
+
+For production, AWS Secrets Manager can replace database credentials stored directly in Lambda environment variables.
+
+---
+
 # Benefits of the Architecture
 
-This project demonstrates:
-
-- Event-driven cloud architecture
+- Full-stack Flask development
+- User authentication
+- Relational database integration
+- Event-driven AWS architecture
 - Serverless image processing
-- Asynchronous message handling
-- Automated S3 events
-- Secure IAM permissions
+- Asynchronous message processing
+- RDS processing history
+- Image metadata tracking
+- Secure password hashing
+- Secure S3 access
+- Processing job tracking
+- Lambda/SQS correlation
 - Cloud monitoring
-- Temporary pre-signed URL generation
-- Automatic email notifications
-- Separation between web and processing layers
+- Automated email notifications
 - No EC2 dependency
-- No RDS dependency
-- Automatic scaling of the Lambda processing layer
+- Scalable serverless processing
 
 ---
 
 # Future Improvements
 
-Potential improvements include:
-
 - Amazon SES email attachments
-- User authentication
-- Multiple-image upload
-- Batch image processing
+- Multiple image upload
+- Batch processing
 - Custom resize dimensions
-- Cropping
-- Rotation
+- Cropping and rotation
 - Watermarking
 - Additional filters
-- Image format conversion
+- Format conversion
 - Direct download buttons
-- Processing history
 - SQS dead-letter queue
 - CloudWatch alarms
 - S3 lifecycle policies
-- CloudFront image delivery
+- CloudFront delivery
 - Hosted Flask deployment
 - Dashboard analytics
+- Password reset
+- Admin dashboard
+- AWS Secrets Manager
+- RDS Proxy
+- Duplicate SQS message protection
+- Improved processing-job idempotency
 
 ---
 
 # Conclusion
 
-The **Srija Flask + AWS Image Processor** demonstrates a complete event-driven cloud image-processing workflow.
+The **Srija Flask + AWS Automated Image Processing System** demonstrates a complete cloud-based image-processing architecture integrating a Flask web application with multiple AWS services.
 
-The Flask web application provides a simple user interface for uploading and viewing images, while Amazon S3 stores the original and processed files. Amazon SQS provides asynchronous messaging, AWS Lambda and Pillow perform image transformations, Amazon SNS provides email notifications, IAM secures access between services, and CloudWatch provides operational monitoring.
+Users can securely register and log in before uploading images through the Flask interface. Amazon RDS MySQL stores user accounts, image records, metadata, processing jobs and processing-event history.
 
-The architecture is modular, scalable, secure, and demonstrates practical integration of multiple AWS services without requiring EC2 or a relational database.
+Original images are stored in Amazon S3. S3 events are delivered through Amazon SQS to AWS Lambda, which uses Pillow to generate resized colour and black-and-white images. Lambda uploads the processed images to S3, records processing information in Amazon RDS and publishes an Amazon SNS notification.
+
+The dashboard allows authenticated users to view their images and processing information while pre-signed S3 URLs provide temporary access to private image objects.
+
+The final architecture demonstrates practical use of **Flask, Amazon RDS, Amazon S3, Amazon SQS, AWS Lambda, Amazon SNS, IAM, VPC networking, CloudWatch, Pillow and PyMySQL** within a single event-driven application, without requiring Amazon EC2.
