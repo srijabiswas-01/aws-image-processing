@@ -1,0 +1,818 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>
+        Image Details | Srija Image Processor
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+
+<body>
+
+
+<header class="topbar">
+
+    <div class="container nav">
+
+        <a
+            class="brand"
+            href="{{ url_for('dashboard') }}"
+        >
+            Srija Image Processor
+        </a>
+
+
+        <div class="nav-actions">
+
+            <a
+                class="nav-link"
+                href="{{ url_for('dashboard') }}"
+            >
+                Dashboard
+            </a>
+
+
+            <a
+                class="nav-link"
+                href="{{ url_for('index') }}"
+            >
+                Upload
+            </a>
+
+
+            {% if session.get('user_name') %}
+
+                <span class="nav-user">
+                    {{ session.get('user_name') }}
+                </span>
+
+            {% endif %}
+
+
+            <a
+                class="nav-link"
+                href="{{ url_for('logout') }}"
+            >
+                Logout
+            </a>
+
+        </div>
+
+    </div>
+
+</header>
+
+
+
+<main class="container">
+
+
+    <!-- =================================================
+         PAGE HEADING
+    ================================================== -->
+
+    <div class="dashboard-heading">
+
+        <div>
+
+            <p class="eyebrow">
+                IMAGE PROCESSING DETAILS
+            </p>
+
+
+            <h1>
+                {{ image.original_filename }}
+            </h1>
+
+
+            <p class="subtitle">
+
+                View processing status, image metadata,
+                S3 outputs and processing history.
+
+            </p>
+
+        </div>
+
+
+        <a
+            class="button-link"
+            href="{{ url_for('dashboard') }}"
+        >
+            Back to dashboard
+        </a>
+
+    </div>
+
+
+
+    <!-- =================================================
+         STATUS
+    ================================================== -->
+
+    <section class="card">
+
+        <div class="card-top">
+
+            <div>
+
+                <h2>
+                    Processing Status
+                </h2>
+
+                <small>
+                    Image ID: {{ image.id }}
+                </small>
+
+            </div>
+
+
+            {% if image.overall_status == 'COMPLETED' %}
+
+                <span class="status done">
+                    Completed
+                </span>
+
+
+            {% elif image.overall_status == 'FAILED' %}
+
+                <span class="status failed">
+                    Failed
+                </span>
+
+
+            {% else %}
+
+                <span class="status processing">
+                    {{ image.overall_status }}
+                </span>
+
+            {% endif %}
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         IMAGE PREVIEWS
+    ================================================== -->
+
+    <section class="card">
+
+        <div class="card-top">
+
+            <div>
+
+                <h2>
+                    Image Outputs
+                </h2>
+
+                <small>
+                    Original and processed files stored in Amazon S3
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <div class="images">
+
+
+            <!-- ORIGINAL -->
+
+            <div class="image-box">
+
+                <span>
+                    Original
+                </span>
+
+
+                {% if image.original_url %}
+
+                    <img
+                        src="{{ image.original_url }}"
+                        alt="Original image"
+                    >
+
+
+                    <a
+                        href="{{ image.original_url }}"
+                        target="_blank"
+                    >
+                        Open original image
+                    </a>
+
+
+                {% else %}
+
+                    <div class="placeholder">
+                        Image unavailable
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+
+
+            <!-- RESIZED -->
+
+            <div class="image-box">
+
+                <span>
+                    Resized colour
+                </span>
+
+
+                {% if image.resized_url %}
+
+                    <img
+                        src="{{ image.resized_url }}"
+                        alt="Resized colour image"
+                    >
+
+
+                    <a
+                        href="{{ image.resized_url }}"
+                        target="_blank"
+                    >
+                        Open resized image
+                    </a>
+
+
+                {% else %}
+
+                    <div class="placeholder">
+                        Processing...
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+
+
+            <!-- BLACK AND WHITE -->
+
+            <div class="image-box">
+
+                <span>
+                    Black &amp; white
+                </span>
+
+
+                {% if image.bw_url %}
+
+                    <img
+                        src="{{ image.bw_url }}"
+                        alt="Black and white image"
+                    >
+
+
+                    <a
+                        href="{{ image.bw_url }}"
+                        target="_blank"
+                    >
+                        Open B&amp;W image
+                    </a>
+
+
+                {% else %}
+
+                    <div class="placeholder">
+                        Processing...
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         METADATA
+    ================================================== -->
+
+    <section class="card">
+
+        <div class="card-top">
+
+            <div>
+
+                <h2>
+                    Image Metadata
+                </h2>
+
+                <small>
+                    Processing information stored in Amazon RDS
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <div class="metadata-grid">
+
+
+            <div class="metadata-item">
+
+                <span class="metadata-label">
+                    Original filename
+                </span>
+
+                <strong>
+                    {{ image.original_filename }}
+                </strong>
+
+            </div>
+
+
+            <div class="metadata-item">
+
+                <span class="metadata-label">
+                    Stored filename
+                </span>
+
+                <strong>
+                    {{ image.stored_filename }}
+                </strong>
+
+            </div>
+
+
+            <div class="metadata-item">
+
+                <span class="metadata-label">
+                    Content type
+                </span>
+
+                <strong>
+                    {{ image.content_type or 'Not available' }}
+                </strong>
+
+            </div>
+
+
+            <div class="metadata-item">
+
+                <span class="metadata-label">
+                    Current status
+                </span>
+
+                <strong>
+                    {{ image.overall_status }}
+                </strong>
+
+            </div>
+
+
+            <div class="metadata-item">
+
+                <span class="metadata-label">
+                    Original dimensions
+                </span>
+
+                <strong>
+
+                    {% if image.original_width and image.original_height %}
+
+                        {{ image.original_width }}
+                        ×
+                        {{ image.original_height }}
+                        px
+
+                    {% else %}
+
+                        Not available
+
+                    {% endif %}
+
+                </strong>
+
+            </div>
+
+
+            <div class="metadata-item">
+
+                <span class="metadata-label">
+                    Original size
+                </span>
+
+                <strong>
+
+                    {% if image.original_size_bytes %}
+
+                        {{ "%.2f"|format(image.original_size_bytes / 1024 / 1024) }}
+                        MB
+
+                    {% else %}
+
+                        Not available
+
+                    {% endif %}
+
+                </strong>
+
+            </div>
+
+
+            <div class="metadata-item">
+
+                <span class="metadata-label">
+                    Resized dimensions
+                </span>
+
+                <strong>
+
+                    {% if image.resized_width and image.resized_height %}
+
+                        {{ image.resized_width }}
+                        ×
+                        {{ image.resized_height }}
+                        px
+
+                    {% else %}
+
+                        Not available
+
+                    {% endif %}
+
+                </strong>
+
+            </div>
+
+
+            <div class="metadata-item">
+
+                <span class="metadata-label">
+                    Resized size
+                </span>
+
+                <strong>
+
+                    {% if image.resized_size_bytes %}
+
+                        {{ "%.2f"|format(image.resized_size_bytes / 1024 / 1024) }}
+                        MB
+
+                    {% else %}
+
+                        Not available
+
+                    {% endif %}
+
+                </strong>
+
+            </div>
+
+
+            <div class="metadata-item">
+
+                <span class="metadata-label">
+                    B&amp;W dimensions
+                </span>
+
+                <strong>
+
+                    {% if image.bw_width and image.bw_height %}
+
+                        {{ image.bw_width }}
+                        ×
+                        {{ image.bw_height }}
+                        px
+
+                    {% else %}
+
+                        Not available
+
+                    {% endif %}
+
+                </strong>
+
+            </div>
+
+
+            <div class="metadata-item">
+
+                <span class="metadata-label">
+                    B&amp;W size
+                </span>
+
+                <strong>
+
+                    {% if image.bw_size_bytes %}
+
+                        {{ "%.2f"|format(image.bw_size_bytes / 1024 / 1024) }}
+                        MB
+
+                    {% else %}
+
+                        Not available
+
+                    {% endif %}
+
+                </strong>
+
+            </div>
+
+
+            <div class="metadata-item">
+
+                <span class="metadata-label">
+                    Uploaded at
+                </span>
+
+                <strong>
+                    {{ image.uploaded_at or 'Not available' }}
+                </strong>
+
+            </div>
+
+
+            <div class="metadata-item">
+
+                <span class="metadata-label">
+                    Processing started
+                </span>
+
+                <strong>
+                    {{ image.processing_started_at or 'Not available' }}
+                </strong>
+
+            </div>
+
+
+            <div class="metadata-item">
+
+                <span class="metadata-label">
+                    Processing completed
+                </span>
+
+                <strong>
+                    {{ image.processing_completed_at or 'Not available' }}
+                </strong>
+
+            </div>
+
+
+            <div class="metadata-item">
+
+                <span class="metadata-label">
+                    Record created
+                </span>
+
+                <strong>
+                    {{ image.created_at }}
+                </strong>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         S3 KEYS
+    ================================================== -->
+
+    <section class="card">
+
+        <div class="card-top">
+
+            <div>
+
+                <h2>
+                    Amazon S3 Objects
+                </h2>
+
+                <small>
+                    Object keys used by the processing pipeline
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <div class="metadata-grid">
+
+
+            <div class="metadata-item">
+
+                <span class="metadata-label">
+                    Original object
+                </span>
+
+                <code>
+                    {{ image.original_s3_key }}
+                </code>
+
+            </div>
+
+
+            <div class="metadata-item">
+
+                <span class="metadata-label">
+                    Resized object
+                </span>
+
+                <code>
+                    {{ image.resized_s3_key or 'Not created yet' }}
+                </code>
+
+            </div>
+
+
+            <div class="metadata-item">
+
+                <span class="metadata-label">
+                    Black &amp; white object
+                </span>
+
+                <code>
+                    {{ image.bw_s3_key or 'Not created yet' }}
+                </code>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         PROCESSING TIMELINE
+    ================================================== -->
+
+    <section class="card">
+
+        <div class="card-top">
+
+            <div>
+
+                <h2>
+                    Processing Timeline
+                </h2>
+
+                <small>
+                    Complete event history recorded in Amazon RDS
+                </small>
+
+            </div>
+
+        </div>
+
+
+        {% if events %}
+
+            <div class="timeline">
+
+
+                {% for event in events %}
+
+                    <div class="timeline-item">
+
+
+                        <div class="timeline-marker"></div>
+
+
+                        <div class="timeline-content">
+
+
+                            <div class="timeline-heading">
+
+                                <strong>
+                                    {{ event.event_type }}
+                                </strong>
+
+
+                                {% if event.status == 'SUCCESS' %}
+
+                                    <span class="status done">
+                                        Success
+                                    </span>
+
+
+                                {% elif event.status == 'FAILED' %}
+
+                                    <span class="status failed">
+                                        Failed
+                                    </span>
+
+
+                                {% else %}
+
+                                    <span class="status processing">
+                                        {{ event.status }}
+                                    </span>
+
+                                {% endif %}
+
+                            </div>
+
+
+                            <p>
+                                {{ event.message }}
+                            </p>
+
+
+                            <small>
+                                {{ event.event_time }}
+                            </small>
+
+
+                        </div>
+
+                    </div>
+
+                {% endfor %}
+
+
+            </div>
+
+
+        {% else %}
+
+            <div class="empty">
+
+                No processing events have been recorded yet.
+
+            </div>
+
+        {% endif %}
+
+    </section>
+
+
+
+    <!-- =================================================
+         ACTIONS
+    ================================================== -->
+
+    <section class="card">
+
+        <div class="card-actions">
+
+
+            <a
+                class="button-link"
+                href="{{ url_for('dashboard') }}"
+            >
+                Back to dashboard
+            </a>
+
+
+            <form
+                action="{{ url_for('delete') }}"
+                method="post"
+                onsubmit="return confirm('Delete original and processed images permanently?')"
+            >
+
+                <input
+                    type="hidden"
+                    name="image_id"
+                    value="{{ image.id }}"
+                >
+
+
+                <button
+                    class="delete-button"
+                    type="submit"
+                >
+                    Delete image
+                </button>
+
+            </form>
+
+        </div>
+
+    </section>
+
+
+</main>
+
+
+</body>
+
+</html>

@@ -163,6 +163,393 @@ button, .button-link {
     text-align: center;
     color: #667085;
 }
+
+/* ==========================================
+   RDS / USER DASHBOARD FEATURES
+========================================== */
+
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.nav-user {
+    font-size: 14px;
+    font-weight: 600;
+    opacity: 0.8;
+}
+
+.user-email {
+    display: block;
+    margin-top: 8px;
+    opacity: 0.7;
+}
+
+.file-size {
+    display: block;
+    margin-top: 4px;
+}
+
+.card-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+
+/* ==========================================
+   FAILED STATUS
+========================================== */
+
+.status.failed {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+
+/* ==========================================
+   METADATA
+========================================== */
+
+.metadata-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.metadata-item {
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #fafafa;
+    overflow-wrap: anywhere;
+}
+
+.metadata-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+    opacity: 0.65;
+}
+
+.metadata-item code {
+    display: block;
+    font-size: 12px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+
+/* ==========================================
+   PROCESSING TIMELINE
+========================================== */
+
+.timeline {
+    margin-top: 25px;
+}
+
+.timeline-item {
+    position: relative;
+    display: flex;
+    gap: 18px;
+    padding-bottom: 28px;
+}
+
+.timeline-item:not(:last-child)::before {
+    content: "";
+    position: absolute;
+    left: 7px;
+    top: 16px;
+    bottom: 0;
+    width: 2px;
+    background: #e5e7eb;
+}
+
+.timeline-marker {
+    position: relative;
+    z-index: 2;
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    border-radius: 50%;
+    background: #2563eb;
+    margin-top: 4px;
+}
+
+.timeline-content {
+    flex: 1;
+    padding-bottom: 5px;
+}
+
+.timeline-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.timeline-content p {
+    margin: 8px 0;
+    line-height: 1.6;
+}
+
+.timeline-content small {
+    opacity: 0.65;
+}
+
+
+/* ==========================================
+   MOBILE
+========================================== */
+
+@media (max-width: 700px) {
+
+    .nav {
+        align-items: flex-start;
+    }
+
+    .nav-actions {
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    .metadata-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .card-actions {
+        justify-content: stretch;
+    }
+
+    .card-actions .button-link,
+    .card-actions form,
+    .card-actions button {
+        width: 100%;
+    }
+}
+
+/* ==========================================
+   LOGIN / REGISTER
+========================================== */
+
+.auth-wrapper {
+    min-height: calc(100vh - 100px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 0;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 460px;
+    padding: 32px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08);
+}
+
+.auth-card h1 {
+    margin-top: 6px;
+    margin-bottom: 10px;
+}
+
+.auth-form {
+    margin-top: 28px;
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 7px;
+}
+
+.form-group input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 15px;
+    outline: none;
+}
+
+.form-group input:focus {
+    border-color: #2563eb;
+}
+
+.auth-button {
+    width: 100%;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+    margin-top: 5px;
+}
+
+.auth-footer {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+}
+
+.auth-footer p {
+    margin: 0 0 6px;
+}
+
+.auth-footer a {
+    font-weight: 600;
+}
+/* ==========================================
+   INDEX - USER INFORMATION
+========================================== */
+
+.user-welcome {
+    margin: 24px 0;
+    padding: 16px 18px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.user-welcome strong {
+    display: block;
+    margin-top: 4px;
+    font-size: 16px;
+}
+
+.user-welcome small {
+    display: block;
+    margin-top: 4px;
+    opacity: 0.65;
+}
+
+
+/* ==========================================
+   DROPZONE
+========================================== */
+
+.dropzone-title {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.dropzone-description {
+    display: block;
+    opacity: 0.65;
+    margin-bottom: 12px;
+}
+
+
+/* ==========================================
+   UPLOAD ACTIONS
+========================================== */
+
+.upload-actions {
+    margin-top: 16px;
+    text-align: center;
+}
+
+.secondary-button {
+    display: inline-block;
+}
+
+
+/* ==========================================
+   PIPELINE
+========================================== */
+
+.pipeline div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pipeline div strong {
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #eef2ff;
+    font-size: 12px;
+}
+
+.pipeline-arrow {
+    opacity: 0.45;
+}
+
+
+/* ==========================================
+   PROCESS INFORMATION
+========================================== */
+
+.process-info {
+    display: grid;
+    grid-template-columns:
+        repeat(auto-fit, minmax(210px, 1fr));
+    gap: 16px;
+    margin-top: 25px;
+    width: 100%;
+}
+
+.info-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.info-card h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+.info-card p {
+    margin: 0;
+    line-height: 1.6;
+    opacity: 0.75;
+}
+
+
+/* ==========================================
+   MOBILE
+========================================== */
+
+@media (max-width: 700px) {
+
+    .pipeline {
+        flex-direction: column;
+    }
+
+    .pipeline-arrow {
+        transform: rotate(90deg);
+    }
+
+    .process-info {
+        grid-template-columns: 1fr;
+    }
+}
 @media (max-width: 850px) {
     .images { grid-template-columns: 1fr; }
     .dashboard-heading { align-items: start; flex-direction: column; }

@@ -1,0 +1,29 @@
+# Environment / secrets
+.env
+*.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Lambda deployment artifacts
+lambda-deploy/
+lambda/function-rds.zip
+
+# Lambda layers
+pymysql-layer/
+pymysql-layer.zip
+
+# Test files
+lambda-test-payload.json
+lambda-test-response.json
+test_db.py
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

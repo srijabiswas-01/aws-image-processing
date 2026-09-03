@@ -1,89 +1,504 @@
 <!doctype html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <meta http-equiv="refresh" content="8">
-    <title>Dashboard | Srija Image Processor</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <title>
+        Dashboard | Srija Image Processor
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
 </head>
+
+
 <body>
+
+
+<!-- =====================================================
+     TOP NAVIGATION
+===================================================== -->
+
 <header class="topbar">
+
     <div class="container nav">
-        <a class="brand" href="{{ url_for('index') }}">Srija Image Processor</a>
-        <a class="nav-link" href="{{ url_for('index') }}">Upload</a>
+
+        <a
+            class="brand"
+            href="{{ url_for('index') }}"
+        >
+            Srija Image Processor
+        </a>
+
+
+        <div class="nav-actions">
+
+            <a
+                class="nav-link"
+                href="{{ url_for('index') }}"
+            >
+                Upload
+            </a>
+
+
+            {% if session.get('user_name') %}
+
+                <span class="nav-user">
+                    {{ session.get('user_name') }}
+                </span>
+
+            {% endif %}
+
+
+            <a
+                class="nav-link"
+                href="{{ url_for('logout') }}"
+            >
+                Logout
+            </a>
+
+        </div>
+
     </div>
+
 </header>
 
+
+
+<!-- =====================================================
+     MAIN CONTENT
+===================================================== -->
+
 <main class="container">
+
+
+    <!-- =================================================
+         DASHBOARD HEADING
+    ================================================== -->
+
     <div class="dashboard-heading">
+
         <div>
-            <p class="eyebrow">S3 IMAGE GALLERY</p>
-            <h1>Processing Dashboard</h1>
-            <p class="subtitle">This page refreshes every 8 seconds while AWS processes new uploads.</p>
+
+            <p class="eyebrow">
+                MY IMAGE GALLERY
+            </p>
+
+
+            <h1>
+                Processing Dashboard
+            </h1>
+
+
+            <p class="subtitle">
+
+                View your original, resized and black-and-white
+                images.
+
+                This page refreshes every 8 seconds while AWS
+                processes new uploads.
+
+            </p>
+
+
+            {% if session.get('user_email') %}
+
+                <small class="user-email">
+
+                    Logged in as
+                    {{ session.get('user_email') }}
+
+                </small>
+
+            {% endif %}
+
         </div>
-        <a class="button-link" href="{{ url_for('index') }}">Upload another</a>
+
+
+        <a
+            class="button-link"
+            href="{{ url_for('index') }}"
+        >
+            Upload another
+        </a>
+
     </div>
 
-    {% with messages = get_flashed_messages() %}
+
+
+    <!-- =================================================
+         FLASH MESSAGES
+    ================================================== -->
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+
         {% if messages %}
-            <div class="flash">{{ messages[0] }}</div>
+
+            {% for category, message in messages %}
+
+                <div class="flash {{ category }}">
+
+                    {{ message }}
+
+                </div>
+
+            {% endfor %}
+
         {% endif %}
+
     {% endwith %}
 
+
+
+    <!-- =================================================
+         IMAGE GALLERY
+    ================================================== -->
+
     {% if items %}
+
         <div class="gallery">
+
+
         {% for item in items %}
+
+
             <article class="card">
+
+
+                <!-- =====================================
+                     IMAGE INFORMATION
+                ====================================== -->
+
                 <div class="card-top">
+
                     <div>
-                        <h2>{{ item.name }}</h2>
-                        <small>{{ item.uploaded_at }}</small>
+
+                        <h2>
+                            {{ item.name }}
+                        </h2>
+
+
+                        <small>
+
+                            Uploaded:
+                            {{ item.uploaded_at }}
+
+                        </small>
+
+
+                        {% if item.original_size %}
+
+                            <small class="file-size">
+
+                                Size:
+                                {{ "%.2f"|format(item.original_size / 1024 / 1024) }}
+                                MB
+
+                            </small>
+
+                        {% endif %}
+
                     </div>
-                    <span class="status {{ 'done' if item.status == 'Completed' else 'processing' }}">
-                        {{ item.status }}
-                    </span>
+
+
+
+                    <!-- =================================
+                         STATUS
+                    ================================== -->
+
+                    {% if item.status == 'COMPLETED' %}
+
+                        <span class="status done">
+
+                            Completed
+
+                        </span>
+
+
+                    {% elif item.status == 'FAILED' %}
+
+                        <span class="status failed">
+
+                            Failed
+
+                        </span>
+
+
+                    {% elif item.status == 'UPLOADED' %}
+
+                        <span class="status processing">
+
+                            Uploaded
+
+                        </span>
+
+
+                    {% elif item.status == 'QUEUED' %}
+
+                        <span class="status processing">
+
+                            Queued
+
+                        </span>
+
+
+                    {% else %}
+
+                        <span class="status processing">
+
+                            Processing
+
+                        </span>
+
+                    {% endif %}
+
                 </div>
+
+
+
+                <!-- =====================================
+                     IMAGE PREVIEWS
+                ====================================== -->
 
                 <div class="images">
+
+
+                    <!-- ORIGINAL IMAGE -->
+
                     <div class="image-box">
-                        <span>Original</span>
+
+                        <span>
+                            Original
+                        </span>
+
+
                         {% if item.original_url %}
-                            <img src="{{ item.original_url }}" alt="Original image">
+
+                            <img
+                                src="{{ item.original_url }}"
+                                alt="Original image"
+                            >
+
+
+                            <a
+                                href="{{ item.original_url }}"
+                                target="_blank"
+                            >
+                                Open original image
+                            </a>
+
+
+                        {% else %}
+
+                            <div class="placeholder">
+
+                                Image unavailable
+
+                            </div>
+
                         {% endif %}
+
                     </div>
 
+
+
+                    <!-- RESIZED IMAGE -->
+
                     <div class="image-box">
-                        <span>Resized colour</span>
+
+                        <span>
+                            Resized colour
+                        </span>
+
+
                         {% if item.resized_url %}
-                            <img src="{{ item.resized_url }}" alt="Resized image">
-                            <a href="{{ item.resized_url }}" target="_blank">Open processed image</a>
+
+                            <img
+                                src="{{ item.resized_url }}"
+                                alt="Resized image"
+                            >
+
+
+                            <a
+                                href="{{ item.resized_url }}"
+                                target="_blank"
+                            >
+                                Open processed image
+                            </a>
+
+
+                        {% elif item.status == 'FAILED' %}
+
+                            <div class="placeholder">
+
+                                Processing failed
+
+                            </div>
+
+
                         {% else %}
-                            <div class="placeholder">Processing…</div>
+
+                            <div class="placeholder">
+
+                                Processing...
+
+                            </div>
+
                         {% endif %}
+
                     </div>
 
+
+
+                    <!-- BLACK AND WHITE IMAGE -->
+
                     <div class="image-box">
-                        <span>Black & white</span>
+
+                        <span>
+                            Black &amp; white
+                        </span>
+
+
                         {% if item.bw_url %}
-                            <img src="{{ item.bw_url }}" alt="Black and white image">
-                            <a href="{{ item.bw_url }}" target="_blank">Open B&W image</a>
+
+                            <img
+                                src="{{ item.bw_url }}"
+                                alt="Black and white image"
+                            >
+
+
+                            <a
+                                href="{{ item.bw_url }}"
+                                target="_blank"
+                            >
+                                Open B&amp;W image
+                            </a>
+
+
+                        {% elif item.status == 'FAILED' %}
+
+                            <div class="placeholder">
+
+                                Processing failed
+
+                            </div>
+
+
                         {% else %}
-                            <div class="placeholder">Processing…</div>
+
+                            <div class="placeholder">
+
+                                Processing...
+
+                            </div>
+
                         {% endif %}
+
                     </div>
+
                 </div>
 
-                <form action="{{ url_for('delete') }}" method="post" onsubmit="return confirm('Delete original and processed images?')">
-                    <input type="hidden" name="upload_key" value="{{ item.upload_key }}">
-                    <button class="delete-button" type="submit">Delete images</button>
-                </form>
+
+
+                <!-- =====================================
+                     IMAGE ACTIONS
+                ====================================== -->
+
+                <div class="card-actions">
+
+
+                    <!-- DETAILS BUTTON -->
+
+                    <a
+                        class="button-link"
+                        href="{{ url_for('image_details', image_id=item.id) }}"
+                    >
+                        View details
+                    </a>
+
+
+
+                    <!-- DELETE BUTTON -->
+
+                    <form
+                        action="{{ url_for('delete') }}"
+                        method="post"
+                        onsubmit="return confirm('Delete original and processed images?')"
+                    >
+
+                        <input
+                            type="hidden"
+                            name="image_id"
+                            value="{{ item.id }}"
+                        >
+
+
+                        <button
+                            class="delete-button"
+                            type="submit"
+                        >
+                            Delete images
+                        </button>
+
+                    </form>
+
+                </div>
+
+
             </article>
+
+
         {% endfor %}
+
+
         </div>
+
+
     {% else %}
-        <div class="empty">No images uploaded yet.</div>
+
+
+        <!-- =================================================
+             EMPTY DASHBOARD
+        ================================================== -->
+
+        <div class="empty">
+
+            <h2>
+                No images uploaded yet
+            </h2>
+
+
+            <p>
+
+                Upload your first image to start the automated
+                AWS image-processing workflow.
+
+            </p>
+
+
+            <a
+                class="button-link"
+                href="{{ url_for('index') }}"
+            >
+                Upload image
+            </a>
+
+        </div>
+
+
     {% endif %}
+
+
 </main>
+
+
 </body>
+
 </html>

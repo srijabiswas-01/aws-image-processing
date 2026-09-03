@@ -1,50 +1,360 @@
 <!doctype html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Srija Image Processor</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <title>
+        Srija Image Processor
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
 </head>
+
+
 <body>
+
+
+<!-- =====================================================
+     TOP NAVIGATION
+===================================================== -->
+
 <header class="topbar">
+
     <div class="container nav">
-        <a class="brand" href="{{ url_for('index') }}">Srija Image Processor</a>
-        <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+
+        <a
+            class="brand"
+            href="{{ url_for('index') }}"
+        >
+            Srija Image Processor
+        </a>
+
+
+        <div class="nav-actions">
+
+            <a
+                class="nav-link"
+                href="{{ url_for('dashboard') }}"
+            >
+                Dashboard
+            </a>
+
+
+            {% if session.get('user_name') %}
+
+                <span class="nav-user">
+                    {{ session.get('user_name') }}
+                </span>
+
+            {% endif %}
+
+
+            <a
+                class="nav-link"
+                href="{{ url_for('logout') }}"
+            >
+                Logout
+            </a>
+
+        </div>
+
     </div>
+
 </header>
 
+
+
+<!-- =====================================================
+     MAIN CONTENT
+===================================================== -->
+
 <main class="container hero">
+
+
+    <!-- =================================================
+         UPLOAD PANEL
+    ================================================== -->
+
     <section class="panel upload-panel">
-        <p class="eyebrow">AWS AUTOMATED IMAGE PROCESSING</p>
-        <h1>Upload once. Get two processed images.</h1>
-        <p class="subtitle">
-            Upload a JPG or PNG. AWS will create an 800×800 maximum resized colour image
-            and a black-and-white version, save both in S3, and send an SNS email notification.
+
+
+        <p class="eyebrow">
+            AWS AUTOMATED IMAGE PROCESSING
         </p>
 
-        {% with messages = get_flashed_messages() %}
+
+        <h1>
+            Upload once. Get two processed images.
+        </h1>
+
+
+        <p class="subtitle">
+
+            Upload a JPG, JPEG or PNG image.
+
+            AWS will automatically create an
+            800×800 maximum resized colour image
+            and a black-and-white version.
+
+            The original and processed files are stored
+            in Amazon S3, processing is handled through
+            SQS and AWS Lambda, metadata is stored in
+            Amazon RDS, and an SNS email notification
+            is sent when processing completes.
+
+        </p>
+
+
+
+        <!-- =============================================
+             LOGGED-IN USER
+        ============================================== -->
+
+        {% if session.get('user_name') %}
+
+            <div class="user-welcome">
+
+                <div>
+
+                    <span class="metadata-label">
+                        Logged in as
+                    </span>
+
+                    <strong>
+                        {{ session.get('user_name') }}
+                    </strong>
+
+                    {% if session.get('user_email') %}
+
+                        <small>
+                            {{ session.get('user_email') }}
+                        </small>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        {% endif %}
+
+
+
+        <!-- =============================================
+             FLASH MESSAGES
+        ============================================== -->
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+
             {% if messages %}
-                <div class="flash">{{ messages[0] }}</div>
+
+                {% for category, message in messages %}
+
+                    <div class="flash {{ category }}">
+                        {{ message }}
+                    </div>
+
+                {% endfor %}
+
             {% endif %}
+
         {% endwith %}
 
-        <form class="upload-form" action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
+
+
+        <!-- =============================================
+             UPLOAD FORM
+        ============================================== -->
+
+        <form
+            class="upload-form"
+            action="{{ url_for('upload') }}"
+            method="post"
+            enctype="multipart/form-data"
+        >
+
+
             <label class="dropzone">
-                <span>Select JPG / JPEG / PNG</span>
-                <input type="file" name="image" accept=".jpg,.jpeg,.png,image/jpeg,image/png" required>
+
+                <span class="dropzone-title">
+                    Select JPG / JPEG / PNG
+                </span>
+
+
+                <small class="dropzone-description">
+                    Choose an image from your computer
+                </small>
+
+
+                <input
+                    type="file"
+                    name="image"
+                    accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                    required
+                >
+
             </label>
-            <button type="submit">Upload & Process</button>
+
+
+            <button
+                type="submit"
+            >
+                Upload &amp; Process
+            </button>
+
         </form>
+
+
+        <!-- =============================================
+             QUICK ACTION
+        ============================================== -->
+
+        <div class="upload-actions">
+
+            <a
+                class="button-link secondary-button"
+                href="{{ url_for('dashboard') }}"
+            >
+                View My Images
+            </a>
+
+        </div>
+
+
     </section>
 
+
+
+    <!-- =================================================
+         PIPELINE
+    ================================================== -->
+
     <section class="pipeline">
-        <div>S3 Upload</div><span>→</span>
-        <div>SQS</div><span>→</span>
-        <div>Lambda</div><span>→</span>
-        <div>Resize + B&W</div><span>→</span>
-        <div>S3 + SNS Email</div>
+
+        <div>
+            <strong>1</strong>
+            <span>S3 Upload</span>
+        </div>
+
+        <span class="pipeline-arrow">
+            →
+        </span>
+
+
+        <div>
+            <strong>2</strong>
+            <span>SQS Queue</span>
+        </div>
+
+        <span class="pipeline-arrow">
+            →
+        </span>
+
+
+        <div>
+            <strong>3</strong>
+            <span>Lambda</span>
+        </div>
+
+        <span class="pipeline-arrow">
+            →
+        </span>
+
+
+        <div>
+            <strong>4</strong>
+            <span>Resize + B&amp;W</span>
+        </div>
+
+        <span class="pipeline-arrow">
+            →
+        </span>
+
+
+        <div>
+            <strong>5</strong>
+            <span>S3 + RDS + SNS</span>
+        </div>
+
     </section>
+
+
+
+    <!-- =================================================
+         PROCESS INFORMATION
+    ================================================== -->
+
+    <section class="process-info">
+
+
+        <div class="info-card">
+
+            <h3>
+                Secure User Account
+            </h3>
+
+            <p>
+                Each image is associated with your
+                authenticated user account in Amazon RDS.
+            </p>
+
+        </div>
+
+
+        <div class="info-card">
+
+            <h3>
+                Automated Processing
+            </h3>
+
+            <p>
+                S3 events trigger SQS and Lambda automatically
+                without manual image processing.
+            </p>
+
+        </div>
+
+
+        <div class="info-card">
+
+            <h3>
+                Two Outputs
+            </h3>
+
+            <p>
+                AWS generates both a resized colour image
+                and a black-and-white image.
+            </p>
+
+        </div>
+
+
+        <div class="info-card">
+
+            <h3>
+                Processing History
+            </h3>
+
+            <p>
+                Upload status, processing events and image
+                metadata can be tracked from your dashboard.
+            </p>
+
+        </div>
+
+
+    </section>
+
+
 </main>
+
+
 </body>
+
 </html>
